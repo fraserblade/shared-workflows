@@ -1,0 +1,30 @@
+name: Reusable Docker Image Build and Push
+
+on:
+  workflow_call: # Allows this workflow to be reused by other workflows
+    inputs:
+      image_name:
+        description: "The name of the Docker image"
+        type: string
+        required: true
+    secrets:
+      registry_token:
+        description: "Token to log in to container registry"
+        required: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.registry_token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}:latest
+
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}:latest
+
